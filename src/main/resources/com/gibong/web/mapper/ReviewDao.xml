@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.gibong.web.dao.ReviewDao">
+	<resultMap id="reviewResultMap" type="com.gibong.web.model.Review" >
+		 <id column="REVIEW_SEQ" property="reviewSeq" />
+		 <result column="USER_ID" property="userId" />
+		 <result column="USER_NAME" property="userName" />
+		 <result column="REVIEW_TITLE" property="reviewTitle" />
+		 <result column="REVIEW_CONTENT" property="reviewContent" />
+		 <result column="REVIEW_DEL_FLAG" property="reviewDelFlag" />
+		 <result column="REVIEW_READ_CNT" property="reviewReadCnt" />
+		 <result column="REVIEW_LIKE_CNT" property="reviewLikeCnt" />
+		 <result column="REGDATE" property="regdate" />
+	</resultMap>
+	
+	<resultMap id="reviewFileResultMap" type="com.gibong.web.model.ReviewFile" >
+		<id column="REVIEW_SEQ" property="reviewSeq" />
+		<result column="FILE_SEQ" property="fileSeq" />
+		<result column="FILE_ORG_NAME" property="fileOrgName" />
+		<result column="FILE_NAME" property="fileName" />
+		<result column="FILE_EXT" property="fileExt" />
+		<result column="FILE_SIZE" property="fileSize" />
+		<result column="REGDATE" property="regdate" />
+	</resultMap>
+	
+	<resultMap id="reviewReplyResultMap" type="com.gibong.web.model.ReviewReply" >
+		<id column="REVIEW_REPLY_SEQ" property="reviewReplySeq" />
+		<result column="USER_ID" property="userId" />
+		<result column="USER_NAME" property="userName" />
+		<result column="REVIEW_SEQ" property="reviewSeq" />
+		<result column="REPLY_DEL_FLAG" property="replyDelFlag" />
+		<result column="REVIEW_REPLY_CONTENT" property="reviewReplyContent" />
+		<result column="REVIEW_REPLY_GROUP" property="reviewReplyGroup" />
+		<result column="REVIEW_REPLY_ORDER" property="reviewReplyOrder" />
+		<result column="REVIEW_REPLY_INDENT" property="reviewReplyIndent" />
+		<result column="REGDATE" property="regdate" />
+	</resultMap>
+	
+	<!-- 후기 게시물 전체 수 -->
+	<select id="totalCount" parameterType="com.gibong.web.model.Review" resultType="long" >
+		SELECT COUNT(R.REVIEW_SEQ) CNT
+          FROM GIBONG_REVIEW R, GIBONG_USER U
+         WHERE R.USER_ID = U.USER_ID
+           AND REVIEW_DEL_FLAG = 'X'
+        <if test="searchType != '' and searchValue != '' and searchType != null and searchValue != null">
+          <choose>
+         	<when test="searchType == 'name'" >  AND U.USER_NAME LIKE '%'||#{searchValue}||'%'</when>
+         	<when test="searchType == 'title'" >  AND R.REVIEW_TITLE LIKE '%'||#{searchValue}||'%'</when>
+         	<when test="searchType == 'content'" >  AND DBMS_LOB.INSTR(R.REVIEW_CONTENT, #{searchValue}) > 0 </when>
+          </choose>
+		</if>
+	</select>
+	
+	<!-- 후기 글 조회-->
+	<select id="list" parameterType="com.gibong.web.model.Review" resultMap="reviewResultMap" >
+	    SELECT REVIEW_SEQ, USER_ID, USER_NAME, REVIEW_TITLE, REVIEW_CONTENT, 
+		       REVIEW_DEL_FLAG, REVIEW_READ_CNT, REVIEW_LIKE_CNT, REGDATE
+		  FROM (
+		                SELECT ROWNUM RNUM, REVIEW_SEQ, USER_ID, USER_NAME, REVIEW_TITLE, REVIEW_CONTENT, 
+		                            REVIEW_DEL_FLAG, REVIEW_READ_CNT, REVIEW_LIKE_CNT, REGDATE
+		                   FROM (
+		                               SELECT
+		                                     R.REVIEW_SEQ REVIEW_SEQ,
+		                                     NVL(R.USER_ID,'') USER_ID,
+		                                     NVL(U.USER_NAME,'') USER_NAME, 
+		                                     NVL(R.REVIEW_TITLE,'') REVIEW_TITLE,
+		                                     NVL(R.REVIEW_CONTENT,'') REVIEW_CONTENT,
+		                                     NVL(R.REVIEW_DEL_FLAG,'') REVIEW_DEL_FLAG,
+		                                     NVL(R.REVIEW_READ_CNT,0) REVIEW_READ_CNT,
+		                                     NVL(R.REVIEW_LIKE_CNT,0) REVIEW_LIKE_CNT,
+		                                     NVL(TO_CHAR(R.REGDATE,'YYYY.MM.DD HH24:MI:SS'),'') REGDATE
+		                                FROM GIBONG_REVIEW R, GIBONG_USER U
+		                                WHERE R.USER_ID = U.USER_ID
+		                                  AND REVIEW_DEL_FLAG = 'X'
+		                                <if test="searchType != '' and searchValue != '' and searchType != null and searchValue != null">
+		                                  <choose>
+         									<when test="searchType=='name'" >  AND U.USER_NAME LIKE '%'||#{searchValue}||'%' </when>
+         									<when test="searchType=='title'" >  AND R.REVIEW_TITLE LIKE '%'||#{searchValue}||'%' </when>
+         									<when test="searchType=='content'" >  AND DBMS_LOB.INSTR(R.REVIEW_CONTENT, #{searchValue}) > 0 </when>
+         								  </choose>
+         								</if>
+         								<if test="viewFlag != '' and viewFlag != null" >
+         									<choose>
+         									<when test="viewFlag=='recently'" > ORDER BY R.REVIEW_SEQ DESC</when>
+         									<when test="viewFlag=='like'" > ORDER BY R.REVIEW_LIKE_CNT DESC</when>
+         									<when test="viewFlag=='read'" > ORDER BY R.REVIEW_READ_CNT DESC</when>
+		                                	</choose>
+		                                </if>
+		                            )
+		              )
+		  WHERE RNUM <![CDATA[>=]]> #{startRow}
+		    AND RNUM <![CDATA[<=]]> #{endRow}
+	</select>
+	
+	<!-- 후기 글 상세 보기 -->
+	<select id="reviewSelect" parameterType="long" resultMap="reviewResultMap" >
+		SELECT REVIEW_SEQ,
+		            NVL(R.USER_ID, '') USER_ID,
+		            NVL(U.USER_NAME, '') USER_NAME,
+		            NVL(R.REVIEW_TITLE, '') REVIEW_TITLE,
+		            NVL(R.REVIEW_CONTENT, '') REVIEW_CONTENT,
+		            NVL(R.REVIEW_DEL_FLAG, '') REVIEW_DEL_FLAG,
+		            NVL(R.REVIEW_READ_CNT, '') REVIEW_READ_CNT,
+		            NVL(R.REVIEW_LIKE_CNT, '') REVIEW_LIKE_CNT,
+		            NVL(TO_CHAR(R.REGDATE,'YYYY.MM.DD HH24:MI:SS'), '' ) REGDATE
+		  FROM GIBONG_REVIEW R, GIBONG_USER U
+		 WHERE R.USER_ID = U.USER_ID
+		   AND REVIEW_SEQ = #{value}
+	</select>
+	
+	<!-- 첨부파일 조회 -->
+	<select id="reviewFileSelect" parameterType="long" resultMap="reviewFileResultMap" >
+		SELECT
+		    REVIEW_SEQ,
+		    FILE_SEQ,
+		    NVL(FILE_ORG_NAME,'') FILE_ORG_NAME,
+		    NVL(FILE_NAME,'') FILE_NAME,
+		    NVL(FILE_EXT,'') FILE_EXT,
+		    NVL(FILE_SIZE,'') FILE_SIZE,
+		    NVL(TO_CHAR(REGDATE,'YYYY.MM.DD HH24:MI:SS'),'') REGDATE
+		  FROM  GIBONG_REVIEW_FILE
+		WHERE REVIEW_SEQ = #{value}
+	</select>
+	
+	<!-- 조회 수 증가 -->
+	<update id="readCnt" parameterType="long" >
+		UPDATE GIBONG_REVIEW
+      	   SET REVIEW_READ_CNT = REVIEW_READ_CNT + 1
+  		 WHERE REVIEW_SEQ = #{value}
+	</update>
+	
+	<!-- 내가 쓴 후기 글 조회 -->
+	<select id="myReview" parameterType="String" resultMap="reviewResultMap" >
+		SELECT R.REVIEW_SEQ,
+		            NVL(R.USER_ID, '') USER_ID,
+		            NVL(U.USER_NAME, '') USER_NAME,
+		            NVL(R.REVIEW_TITLE, '') REVIEW_TITLE,
+		            NVL(R.REVIEW_CONTENT, '') REVIEW_CONTENT,
+		            NVL(R.REVIEW_DEL_FLAG, '') REVIEW_DEL_FLAG,
+		            NVL(R.REVIEW_READ_CNT, '') REVIEW_READ_CNT,
+		            NVL(R.REVIEW_LIKE_CNT, '') REVIEW_LIKE_CNT,
+		            NVL(TO_CHAR(R.REGDATE,'YYYY.MM.DD HH24:MI:SS'), '' ) REGDATE
+		  FROM GIBONG_REVIEW R, GIBONG_USER U
+		 WHERE R.USER_ID = U.USER_ID
+		   AND REVIEW_DEL_FLAG = 'X'
+		   AND R.USER_ID = #{value}
+		 ORDER BY REVIEW_SEQ DESC
+	</select>	  
+	
+	<!-- 봉사 후기 글 업로드 -->
+	<insert id="reviewInsert" parameterType="com.gibong.web.model.Review" >
+	<selectKey resultType="long" keyProperty="reviewSeq" order="BEFORE" >
+		SELECT SEQ_GIBONG_REVIEW.NEXTVAL FROM DUAL
+	</selectKey>
+		 INSERT INTO GIBONG_REVIEW 
+		 	(
+			    REVIEW_SEQ,
+			    USER_ID,
+			    REVIEW_TITLE,
+			    REVIEW_CONTENT,
+			    REVIEW_DEL_FLAG,
+			    REVIEW_READ_CNT,
+			    REVIEW_LIKE_CNT,
+			    REGDATE
+			) 
+			VALUES 
+			(
+				#{reviewSeq}, #{userId}, #{reviewTitle},
+				#{reviewContent},'X',0,0,SYSDATE
+			)
+	</insert>
+	
+	<!-- 봉사 후기 첨부파일 업로드 -->
+	<insert id="reviewFileInsert" parameterType="com.gibong.web.model.ReviewFile" >
+	<selectKey resultType="long" keyProperty="fileSeq" order="BEFORE" >
+			SELECT NVL(MAX(FILE_SEQ), 0) + 1 
+			  FROM GIBONG_REVIEW_FILE WHERE REVIEW_SEQ = #{reviewSeq}
+	</selectKey>
+	
+		INSERT INTO GIBONG_REVIEW_FILE 
+		(
+		    REVIEW_SEQ,
+		    FILE_SEQ,
+		    FILE_ORG_NAME,
+		    FILE_NAME,
+		    FILE_EXT,
+		    FILE_SIZE,
+		    REGDATE
+		) 
+		VALUES 
+		(
+		     #{reviewSeq}, #{fileSeq},
+		     #{fileOrgName}, #{fileName}, #{fileExt}, #{fileSize}, SYSDATE
+		)
+	</insert>
+	
+	<!-- 글 수정 -->
+	<update id="reviewUpdate" parameterType="com.gibong.web.model.Review" >
+		UPDATE GIBONG_REVIEW
+		SET
+		    REVIEW_TITLE = #{reviewTitle},
+		    REVIEW_CONTENT = #{reviewContent}
+		WHERE
+		        REVIEW_SEQ = #{reviewSeq}
+	</update>
+	
+	<!-- 첨부파일 삭제 -->
+	<delete id="reviewFileDelete" parameterType="long" >
+		DELETE FROM GIBONG_REVIEW_FILE
+		 WHERE REVIEW_SEQ = #{value}
+	</delete>
+	
+	<!-- 글 삭제 플래그만 변경해서 안보여줄-->
+	<update id="reviewDelete" parameterType="long" >
+		UPDATE GIBONG_REVIEW 
+      	   SET REVIEW_DEL_FLAG = 'O'
+         WHERE REVIEW_SEQ = #{value}	
+	</update>
+	
+	<!-- 해당 글의 댓글 조회 -->
+	<select id="replySelect" parameterType="long" resultMap="reviewReplyResultMap" >
+		SELECT
+		    NVL(R.USER_ID,'') USER_ID,
+		    NVL(U.USER_NAME,'') USER_NAME,
+		    R.REVIEW_REPLY_SEQ REVIEW_REPLY_SEQ,
+		    NVL(R.REVIEW_SEQ,0) REVIEW_SEQ,
+		    NVL(R.REPLY_DEL_FLAG,'') REPLY_DEL_FLAG,
+		    NVL(R.REVIEW_REPLY_CONTENT,'') REVIEW_REPLY_CONTENT,
+		    NVL(R.REVIEW_REPLY_GROUP,0) REVIEW_REPLY_GROUP,
+		    NVL(R.REVIEW_REPLY_ORDER,0) REVIEW_REPLY_ORDER,
+		    NVL(R.REVIEW_REPLY_INDENT,0) REVIEW_REPLY_INDENT,
+		    NVL(TO_CHAR(R.REGDATE,'YYYY.MM.DD HH24:MI:SS'),'') REGDATE
+		FROM  GIBONG_REVIEW_REPLY R, GIBONG_USER U
+		WHERE R.USER_ID = U.USER_ID
+		  AND R.REVIEW_SEQ = #{value}
+		ORDER BY REVIEW_REPLY_SEQ ASC
+	</select>
+	
+	<!-- 댓글 수 조회 -->
+	<select id="replyCnt" parameterType="long" resultType="long" >
+	   	  SELECT COUNT(REVIEW_REPLY_SEQ) CNT
+			FROM  GIBONG_REVIEW_REPLY 
+		   WHERE REVIEW_SEQ = #{value}
+	</select>
+	
+	<!-- 댓글 삭제 -->
+	<update id="replyDelete" parameterType="long" >
+		 UPDATE GIBONG_REVIEW_REPLY
+			SET REPLY_DEL_FLAG = 'Y'
+		  WHERE REVIEW_REPLY_SEQ = #{value}
+	</update>
+	
+	<!-- 댓글 입력 -->
+	<insert id="replyInsert" parameterType="com.gibong.web.model.ReviewReply" >
+	<selectKey resultType="long" keyProperty="reviewReplySeq" order="BEFORE">
+		SELECT SEQ_REVIEW_REPLY_SEQ.NEXTVAL FROM DUAL
+	</selectKey>
+		INSERT INTO GIBONG_REVIEW_REPLY 
+		(
+    				USER_ID,  REVIEW_REPLY_SEQ,  REVIEW_SEQ,
+    				REPLY_DEL_FLAG,  REVIEW_REPLY_CONTENT,  REVIEW_REPLY_GROUP,
+    				REVIEW_REPLY_ORDER,  REVIEW_REPLY_INDENT,  REGDATE
+		) 
+		VALUES 
+		(#{userId}, #{reviewReplySeq}, #{reviewSeq}, 'X', #{reviewReplyContent}, 
+		#{reviewReplyGroup}, #{reviewReplyOrder}, #{reviewReplyIndent}, SYSDATE )
+	</insert>
+
+	<!-- 애기 오더 번호 지정 -->
+	<select id="replyOrderNum" resultType="long" parameterType="long" >
+		SELECT MAX(NVL(REVIEW_REPLY_ORDER,0)) CNT
+		  FROM GIBONG_REVIEW_REPLY
+		 WHERE REVIEW_SEQ = #{value}
+	</select>
+	
+	<!-- 애기 댓글 입력 -->
+	<insert id="replyInsertBB" parameterType="com.gibong.web.model.ReviewReply" >
+	<selectKey resultType="long" keyProperty="reviewReplySeq" order="BEFORE">
+		SELECT SEQ_REVIEW_REPLY_SEQ.NEXTVAL FROM DUAL
+	</selectKey>
+		INSERT INTO GIBONG_REVIEW_REPLY 
+		(
+    				USER_ID,  REVIEW_REPLY_SEQ,  REVIEW_SEQ,
+    				REPLY_DEL_FLAG,  REVIEW_REPLY_CONTENT,  REVIEW_REPLY_GROUP,
+    				REVIEW_REPLY_ORDER,  REVIEW_REPLY_INDENT,  REGDATE
+		) 
+		VALUES 
+		(#{userId}, #{reviewReplySeq}, #{reviewSeq}, 'X', #{reviewReplyContent}, 
+		#{reviewReplyGroup}, #{reviewReplyOrder}, #{reviewReplyIndent}, SYSDATE )
+	</insert>
+	
+</mapper>
+
+

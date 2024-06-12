@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.gibong.web.dao.VolunDao">
+	<resultMap id="volunResultMap" type="com.gibong.web.model.Volun" >
+		<id column="VOLUN_SEQ" property="volunSeq" />
+		<result column="VOLUN_DEL_FLAG" property="volunDelFlag" />
+		<result column="USER_ID" property="userId" />
+		<result column="VOLUN_TYPE" property="volunType" />
+		<result column="VOLUN_TITLE" property="volunTitle" />
+		<result column="VOLUN_CONTENT" property="volunContent" />
+		<result column="REGDATE" property="regdate" />
+		<result column="END_REGDATE" property="endRegdate" />
+		<result column="VOLUN_PEOPLE" property="volunPeople" />
+		<result column="VOLUN_TIME" property="volunTime" />
+		<result column="VOLUN_DATE" property="volunDate" />
+		<result column="VOLUN_DAE" property="volunDae" />
+	</resultMap>
+	
+	<resultMap id="volunFileResultMap" type="com.gibong.web.model.VolunFile" >
+		<id column="VOLUN_SEQ" property="volunSeq" />
+		<result column="FILE_SEQ" property="fileSeq" />
+		<result column="FILE_ORG_NAME" property="fileOrgName" />
+		<result column="FILE_NAME" property="fileName" />
+		<result column="FILE_EXT" property="fileExt" />
+		<result column="FILE_SIZE" property="fileSize" />
+		<result column="REGDATE" property="regdate" />
+	</resultMap>
+	
+	<!-- 봉사 글 갯수 -->
+ 	<select id="volunTotalCnt" parameterType="com.gibong.web.model.Volun" resultType="long" >
+		SELECT COUNT(VOLUN_SEQ) CNT
+		  FROM GIBONG_VOLUN
+	</select> 
+	
+	<!-- 봉사 리스트 -->
+	<select id="volunList" parameterType="com.gibong.web.model.Volun" resultMap="volunResultMap">
+ 		SELECT *
+		   FROM (
+		            SELECT ROWNUM RNUM, VOLUN_SEQ, VOLUN_DEL_FLAG, USER_ID, 
+		                        VOLUN_TYPE, VOLUN_TITLE, VOLUN_CONTENT, REGDATE, END_REGDATE
+		              FROM (
+		                        SELECT
+		                            VOLUN_SEQ,
+		                            NVL(VOLUN_DEL_FLAG,'') VOLUN_DEL_FLAG,
+		                            NVL(USER_ID,'') USER_ID,
+		                            NVL(VOLUN_TYPE,'') VOLUN_TYPE,
+		                            NVL(VOLUN_TITLE,'') VOLUN_TITLE,
+		                            NVL(VOLUN_CONTENT,'') VOLUN_CONTENT,
+		                            NVL(TO_CHAR(REGDATE,'YYYY.MM.DD'),'') REGDATE,
+		                            NVL(TO_CHAR(END_REGDATE,'YYYY.MM.DD'),'') END_REGDATE,
+		                            NVL(VOLUN_PEOPLE,0) VOLUN_PEOPLE,
+		                            NVL(VOLUN_TIME, 0) VOLUN_TIME,
+		                            NVL(TO_CHAR(VOLUN_DATE,'YYYY.MM.DD'), '') VOLUN_DATE,
+		                            NVL(VOLUN_DAE,'') VOLUN_DAE
+		                        FROM
+		                            GIBONG_VOLUN
+		                        ORDER BY VOLUN_SEQ DESC
+		                     )
+		            )
+		WHERE RNUM <![CDATA[>=]]> #{startRow}
+		  AND RNUM <![CDATA[<=]]> #{endRow}
+	</select>
+	
+	<!-- 모집 중인 글만 보기 -->
+	<select id="volunMoList" parameterType="com.gibong.web.model.Volun" resultMap="volunResultMap">
+ 		SELECT *
+		   FROM (
+		            SELECT ROWNUM RNUM, VOLUN_SEQ, VOLUN_DEL_FLAG, USER_ID, 
+		                        VOLUN_TYPE, VOLUN_TITLE, VOLUN_CONTENT, REGDATE, END_REGDATE
+		              FROM (
+		                        SELECT
+		                            VOLUN_SEQ,
+		                            NVL(VOLUN_DEL_FLAG,'') VOLUN_DEL_FLAG,
+		                            NVL(USER_ID,'') USER_ID,
+		                            NVL(VOLUN_TYPE,'') VOLUN_TYPE,
+		                            NVL(VOLUN_TITLE,'') VOLUN_TITLE,
+		                            NVL(VOLUN_CONTENT,'') VOLUN_CONTENT,
+		                            NVL(TO_CHAR(REGDATE,'YYYY.MM.DD'),'') REGDATE,
+		                            NVL(TO_CHAR(END_REGDATE,'YYYY.MM.DD'),'') END_REGDATE,
+		                            NVL(VOLUN_PEOPLE,0) VOLUN_PEOPLE,
+		                            NVL(VOLUN_TIME, 0) VOLUN_TIME,
+		                            NVL(TO_CHAR(VOLUN_DATE,'YYYY.MM.DD HH24:MI:SS'), '') VOLUN_DATE,
+		                            NVL(VOLUN_DAE,'') VOLUN_DAE
+		                        FROM
+		                            GIBONG_VOLUN
+		                        WHERE VOLUN_DEL_FLAG = 'X'
+		                        ORDER BY VOLUN_SEQ DESC
+		                     )
+		            )
+		WHERE RNUM <![CDATA[>=]]> #{startRow}
+		  AND RNUM <![CDATA[<=]]> #{endRow}
+	</select>
+	
+	<!-- 모집 중 모집 마감 플래그 값 변경되도록 -->
+	<update id="delFlagUpdate" parameterType="String" >
+		UPDATE GIBONG_VOLUN
+	       SET VOLUN_DEL_FLAG = 'Y'
+	     WHERE #{value} <![CDATA[<]]> SYSDATE
+	</update>
+	
+	<!-- 모집 글 등록 -->
+	<insert id="volunInsert" parameterType="com.gibong.web.model.Volun" >
+	<selectKey  resultType="long" keyProperty="volunSeq" order="BEFORE"  >
+		SELECT SEQ_VOLUN_SEQ.NEXTVAL FROM DUAL
+	</selectKey>
+		INSERT INTO GIBONG_VOLUN 
+		(
+	    	VOLUN_SEQ, VOLUN_DEL_FLAG, USER_ID,
+	    	VOLUN_TYPE, VOLUN_TITLE, VOLUN_CONTENT,
+	    	REGDATE,  END_REGDATE,  VOLUN_PEOPLE,
+	    	VOLUN_TIME,  VOLUN_DATE, VOLUN_DAE
+    	) 
+		VALUES (#{volunSeq}, 'X', #{userId},#{volunType},#{volunTitle},#{volunContent}
+		       ,SYSDATE, TO_DATE(#{endRegdate},'YYYY.MM.DD'), #{volunPeople}, #{volunTime}, TO_DATE(#{volunDate},'YYYY.MM.DD'), #{volunDae})
+	</insert>
+	
+	<!-- 첨부파일 등록 -->
+	<insert id="volunFileInsert" parameterType="com.gibong.web.model.ReviewFile" >
+	<selectKey resultType="long" keyProperty="fileSeq" order="BEFORE" >
+			SELECT NVL(MAX(VOLUN_SEQ), 0) + 1 
+			  FROM GIBONG_VOLUN_FILE WHERE VOLUN_SEQ = #{volunSeq}
+	</selectKey>
+		INSERT INTO GIBONG_VOLUN_FILE 
+		(
+		    VOLUN_SEQ,
+		    FILE_SEQ,
+		    FILE_ORG_NAME,
+		    FILE_NAME,
+		    FILE_EXT,
+		    FILE_SIZE,
+		    REGDATE
+		) 
+		VALUES 
+		(
+		     #{volunSeq}, #{fileSeq},
+		     #{fileOrgName}, #{fileName}, #{fileExt}, #{fileSize}, SYSDATE
+		)
+	</insert>
+	
+	<!-- 글 상세 조회 -->
+	<select id="volunSelect" parameterType="long" resultMap="volunResultMap" >
+		SELECT
+		  	VOLUN_SEQ,
+		  	NVL(VOLUN_DEL_FLAG,'') VOLUN_DEL_FLAG,
+		    NVL(USER_ID,'') USER_ID,
+		    NVL(VOLUN_TYPE,'') VOLUN_TYPE,
+		    NVL(VOLUN_TITLE,'') VOLUN_TITLE,
+		    NVL(VOLUN_CONTENT,'') VOLUN_CONTENT,
+		    NVL(TO_CHAR(REGDATE,'YYYY.MM.DD'),'') REGDATE,
+		    NVL(TO_CHAR(END_REGDATE,'YYYY.MM.DD'),'') END_REGDATE,
+		    NVL(VOLUN_PEOPLE,0) VOLUN_PEOPLE,
+		    NVL(VOLUN_TIME, 0) VOLUN_TIME,
+		    NVL(TO_CHAR(VOLUN_DATE,'YYYY.MM.DD HH24:MI:SS'), '') VOLUN_DATE,
+		    NVL(VOLUN_DAE,'') VOLUN_DAE
+		FROM GIBONG_VOLUN
+		WHERE VOLUN_SEQ = #{value}
+	</select>
+	
+	<!-- 첨부파일 조회 -->
+	<select id="volunFileSelect" parameterType="long" resultMap="volunFileResultMap">
+	  SELECT
+		    VOLUN_SEQ, FILE_SEQ,  FILE_ORG_NAME,
+		    FILE_NAME,  FILE_EXT,  FILE_SIZE,  REGDATE
+		FROM  GIBONG_VOLUN_FILE
+	   WHERE VOLUN_SEQ = #{value}
+	</select>
+	
+</mapper>

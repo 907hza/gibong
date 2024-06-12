@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.gibong.web.dao.DonateDao">
+	<resultMap id="donateResultMap" type="com.gibong.web.model.Donate" >
+		<id column="DONATE_SEQ" property="donateSeq" />
+		<result column="USER_ID" property="userId" />
+		<result column="DONATE_FLAG" property="donateFlag" />
+		<result column="DONATE_TITLE" property="donateTitle" />
+		<result column="DONATE_CONTENT" property="donateContent" />
+		<result column="REGDATE" property="regdate" />
+		<result column="DONATE_NOW_AMT" property="donateNowAmt" />
+		<result column="DONATE_GOAL_AMT" property="donateGoalAmt" />
+		<result column="FINISH_FLAG" property="finishFlag" />
+	</resultMap>
+	
+	<resultMap id="payLog" type="com.gibong.web.model.PayLog" >
+		<id column="PAY_LOG_SEQ" property="payLogSeq" />
+		<result column="DONATE_SEQ" property="donateSeq" />
+		<result column="USER_ID" property="userId" />
+		<result column="PAY_CODE" property="payCode" />
+		<result column="PAY_FLAG" property="payFlag" />
+		<result column="REGDATE" property="regdate" />
+		<result column="PAY_MONEY" property="payMoney" />
+	</resultMap>
+	
+	<resultMap id="donateFileResultMap" type="com.gibong.web.model.DonateFile" >
+		<id column="DONATE_SEQ" property="donateSeq" />
+		<result column="FILE_SEQ" property="fileSeq" />
+		<result column="FILE_ORG_NAME" property="fileOrgName" />
+		<result column="FILE_NAME" property="fileName" />
+		<result column="FILE_EXT" property="fileExt" />
+		<result column="FILE_SIZE" property="fileSize" />
+		<result column="REGDATE" property="regdate" />
+	</resultMap>
+	
+	<!-- 후원 게시물 총 갯수 -->
+	<select id="donateCnt" parameterType="com.gibong.web.model.Donate" resultType="long" >
+	  SELECT
+		    COUNT(DONATE_SEQ) CNT
+		FROM
+		    GIBONG_DONATE
+	</select>
+	
+	<!-- 후원 리스트 -->
+	<select id="donateSelect" parameterType="com.gibong.web.model.Donate" resultMap="donateResultMap">
+		SELECT
+		    DONATE_SEQ,
+		    NVL(USER_ID,'') USER_ID,
+		    NVL(DONATE_FLAG,'') DONATE_FLAG,
+		    NVL(DONATE_TITLE,'') DONATE_TITLE,
+		    NVL(DONATE_CONTENT,'') DONATE_CONTENT,
+		    NVL(TO_CHAR(REGDATE,'YYYY.MM.DD'),'') REGDATE,
+		    NVL(DONATE_NOW_AMT,'') DONATE_NOW_AMT,
+		    NVL(DONATE_GOAL_AMT,'') DONATE_GOAL_AMT,
+		    NVL(FINISH_FLAG,'') FINISH_FLAG
+		FROM
+		    GIBONG_DONATE
+		ORDER BY
+		    DONATE_SEQ DESC
+	</select>
+	
+	<!-- 후원 글 조회 -->
+	<select id="donateWhere" parameterType="long" resultMap="donateResultMap" >
+		SELECT
+			    DONATE_SEQ,
+			    NVL(USER_ID,'') USER_ID,
+			    NVL(DONATE_FLAG,'') DONATE_FLAG,
+			    NVL(DONATE_TITLE,'') DONATE_TITLE,
+			    NVL(DONATE_CONTENT,'') DONATE_CONTENT,
+			    NVL(TO_CHAR(REGDATE,'YYYY.MM.DD'),'') REGDATE,
+			    NVL(DONATE_NOW_AMT,'') DONATE_NOW_AMT,
+			    NVL(DONATE_GOAL_AMT,'') DONATE_GOAL_AMT,
+			    NVL(FINISH_FLAG,'') FINISH_FLAG
+			FROM
+			    GIBONG_DONATE
+			WHERE DONATE_SEQ = #{value}
+	</select>
+	
+	<!-- 후원 첨부파일 조회 -->
+	<select id="donateFileSelect" parameterType="long" resultMap="donateFileResultMap" >
+				SELECT
+				    DONATE_SEQ,
+				    FILE_SEQ,
+				    NVL(FILE_ORG_NAME,'') FILE_ORG_NAME,
+				    NVL(FILE_NAME,'') FILE_NAME,
+				    NVL(FILE_EXT,'') FILE_EXT,
+				    NVL(FILE_SIZE,'') FILE_SIZE,
+				    NVL(TO_CHAR(REGDATE,'YYYY.MM.DD HH24:MI:SS'),'') REGDATE
+				  FROM  GIBONG_DONATE_FILE
+				WHERE DONATE_SEQ = #{value}
+	</select>
+	
+	<!-- 후원 상세 -->
+	<select id="donateViewSelect" parameterType="long" resultMap="donateResultMap">
+		SELECT
+		    DONATE_SEQ,
+		    NVL(USER_ID,'') USER_ID,
+		    NVL(DONATE_FLAG,'') DONATE_FLAG,
+		    NVL(DONATE_TITLE,'') DONATE_TITLE,
+		    NVL(DONATE_CONTENT,'') DONATE_CONTENT,
+		    NVL(TO_CHAR(REGDATE,'YYYY.MM.DD'),'') REGDATE,
+		    NVL(DONATE_NOW_AMT,'') DONATE_NOW_AMT,
+		    NVL(DONATE_GOAL_AMT,'') DONATE_GOAL_AMT,
+		    NVL(FINISH_FLAG,'') FINISH_FLAG
+		FROM
+		    GIBONG_DONATE
+		WHERE DONATE_SEQ = #{value}
+	</select>
+</mapper>
