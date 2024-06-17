@@ -13,4 +13,4 @@ Maven, Oracle 21C, STS3, SQL Developer,  jQuery, javax.mail (JavaMail API), Kaka
 <br>
 <hr style="solid black 1px">
 <h2>DB 설계</h2>
-<img src="[https://github.com/907hza/cyworld/assets/145747413/c5c7048f-545e-4370-a95c-8f3dac1cdf60](https://github.com/907hza/gibong/assets/145747413/4638051a-8f1b-4e5c-83c9-db181bfd25e6)" />
+<img src="https://github.com/907hza/gibong/assets/145747413/4638051a-8f1b-4e5c-83c9-db181bfd25e6" />
