@@ -21,7 +21,8 @@
 <img alt="STS3" src ="https://img.shields.io/badge/STS3-green.svg?&style=for-the-badge&logo=STS3&logoColor=white"/>
 <img alt="SQL Developer" src ="https://img.shields.io/badge/SQL Developer-red.svg?&style=for-the-badge&logo=SQL Developer&logoColor=white"/>
 <img alt="RESTful API" src ="https://img.shields.io/badge/RESTful API-powderblue.svg?&style=for-the-badge&logo=RESTful API&logoColor=white"/>
-<br><b>API</b> : javax.mail (JavaMail API), KakaoPay API, 다음 도로명 주소 API
+<br><br>
+<b>API</b> : javax.mail (JavaMail API), KakaoPay API, 다음 도로명 주소 API
 </div>
 <br>
 
