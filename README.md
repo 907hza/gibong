@@ -1,5 +1,5 @@
 <h1>맨발의 기봉이</h1>
-
+<img src="https://github.com/907hza/cyworld/assets/145747413/56d60a07-12c4-4698-9956-531bc755d0d3">
 <ul>
 <li><b>개발 인원</b> : 1명 (개인 프로젝트)</li></br>
 <li><b>프로젝트 목적</b> : Spring MVC 사용 경험 및 숙련도 향상을 위해서 진행</li></br>
