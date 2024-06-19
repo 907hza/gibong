@@ -40,5 +40,5 @@
 <img src="https://github.com/907hza/gibong/assets/145747413/4638051a-8f1b-4e5c-83c9-db181bfd25e6" />
 <br>
 <h3>(4) 와이어 프레임</h3>
-<img src="">
+<img src="https://github.com/907hza/cyworld/assets/145747413/597a0197-1632-4412-83e1-a468efa8be76">
 
